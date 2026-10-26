@@ -3,6 +3,7 @@
 namespace EsmondMcCain\NuclearReset\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use EsmondMcCain\NuclearReset\FilesystemPreflight;
 use EsmondMcCain\NuclearReset\Preflight;
 
 class BootstrapTest extends TestCase {
@@ -46,5 +47,20 @@ class BootstrapTest extends TestCase {
 		self::assertNotContains( 'wp_options', $missing );
 		self::assertNotContains( 'wp_users', $missing );
 		self::assertContains( 'wp_posts', $missing );
+	}
+
+	public function test_filesystem_preflight_rejects_sibling_paths(): void {
+		self::assertTrue(
+			FilesystemPreflight::is_path_within(
+				'C:\\site\\wp-content\\plugins\\em-nuclear-reset',
+				'C:\\site\\wp-content\\plugins'
+			)
+		);
+		self::assertFalse(
+			FilesystemPreflight::is_path_within(
+				'C:\\site\\wp-content\\plugins-old\\other-plugin',
+				'C:\\site\\wp-content\\plugins'
+			)
+		);
 	}
 }

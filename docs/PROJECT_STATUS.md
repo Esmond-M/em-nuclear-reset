@@ -25,7 +25,8 @@ Milestone 1: read-only preflight foundation.
 - No reset, filesystem cleanup, or destructive behavior exists.
 - The preflight service only lists tables matching the current `$wpdb->prefix` and reports missing core tables.
 - The admin-only preflight page displays collected facts and refuses multisite. It has no destructive controls.
+- Filesystem discovery classifies immediate uploads, plugin, and theme paths as preserved, eligible, or blocked without recursion or mutation.
 
 ## Next Task
 
-Add read-only filesystem discovery so the preview can distinguish preserved plugin/theme paths from eligible cleanup paths.
+Add confirmation-state design and durable operation logging before any reset execution path is considered.

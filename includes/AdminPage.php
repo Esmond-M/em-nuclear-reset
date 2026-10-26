@@ -31,7 +31,8 @@ final class AdminPage {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'em-nuclear-reset' ) );
 		}
 
-		$preflight = Preflight::collect();
+		$preflight  = Preflight::collect();
+		$filesystem = FilesystemPreflight::collect();
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'EM Nuclear Reset', 'em-nuclear-reset' ); ?></h1>
@@ -66,6 +67,12 @@ final class AdminPage {
 				<p class="notice notice-warning inline"><span><?php esc_html_e( 'Some expected WordPress core tables are missing.', 'em-nuclear-reset' ); ?></span></p>
 				<?php self::render_table_list( $preflight['missing_core_tables'] ); ?>
 			<?php endif; ?>
+
+			<h2><?php esc_html_e( 'Filesystem Preview', 'em-nuclear-reset' ); ?></h2>
+			<p><?php esc_html_e( 'Entries are listed without recursion. Preserved entries are retained, eligible entries are potential future cleanup targets, and blocked entries require manual review.', 'em-nuclear-reset' ); ?></p>
+			<?php self::render_path_group( __( 'Uploads', 'em-nuclear-reset' ), $filesystem['uploads'] ); ?>
+			<?php self::render_path_group( __( 'Plugins', 'em-nuclear-reset' ), $filesystem['plugins'] ); ?>
+			<?php self::render_path_group( __( 'Themes', 'em-nuclear-reset' ), $filesystem['themes'] ); ?>
 		</div>
 		<?php
 	}
@@ -103,6 +110,37 @@ final class AdminPage {
 				<li><code><?php echo esc_html( $table ); ?></code></li>
 			<?php endforeach; ?>
 		</ul>
+		<?php
+	}
+
+	/**
+	 * Renders one filesystem classification group.
+	 *
+	 * @param string                       $heading Group heading.
+	 * @param array<int, array<string, string>> $paths   Classified paths.
+	 * @return void
+	 */
+	private static function render_path_group( $heading, array $paths ) {
+		?>
+		<h3><?php echo esc_html( $heading ); ?></h3>
+		<table class="widefat striped">
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'Path', 'em-nuclear-reset' ); ?></th>
+					<th><?php esc_html_e( 'Classification', 'em-nuclear-reset' ); ?></th>
+					<th><?php esc_html_e( 'Review note', 'em-nuclear-reset' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $paths as $path ) : ?>
+					<tr>
+						<td><code><?php echo esc_html( $path['path'] ); ?></code></td>
+						<td><?php echo esc_html( $path['status'] ); ?></td>
+						<td><?php echo esc_html( $path['reason'] ); ?></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
 		<?php
 	}
 }
