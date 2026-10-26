@@ -8,7 +8,7 @@ Milestone 1: read-only preflight foundation.
 
 - The development site runs in Local by WP Engine.
 - The Windows PHP executable is development tooling only and must not be treated as the Local runtime.
-- The isolated `wp-env` environment is configured at `http://localhost:18080`.
+- The isolated `wp-env` environment is verified with WordPress 6.7 and the plugin active at `http://localhost:18080`.
 
 ## Decisions
 
@@ -27,7 +27,8 @@ Milestone 1: read-only preflight foundation.
 - The admin-only preflight page displays collected facts and refuses multisite. It has no destructive controls.
 - Filesystem discovery classifies uploads, plugin, and theme paths as preserved, eligible, or blocked. It estimates regular-file count and size without following symlinks, with a scan limit.
 - Confirmation requirements and the future operation-log schema are implemented without an execution path; the recovery sequence and destructive-test requirements are documented.
+- The reset coordinator validates readiness and builds a non-executing operation plan; it cannot change the site.
 
 ## Next Task
 
-Resolve the isolated Docker environment before destructive integration testing. Do not implement reset execution without explicit approval.
+Create the execution implementation only after explicit destructive-test approval. The first test must run solely in `wp-env`.

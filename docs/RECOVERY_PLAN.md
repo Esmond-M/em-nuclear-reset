@@ -25,6 +25,10 @@
 7. Verify core tables, required auto-increment columns, preserved components, administrator access, and migration-plugin readiness.
 8. Mark the log as complete only after every verification succeeds; otherwise record the failed phase and recovery guidance.
 
+## Current Coordinator Boundary
+
+`ResetCoordinator` validates multisite, capability, nonce, typed confirmation, and concurrent-operation lock conditions, then builds an immutable operation plan. It does not acquire locks, write logs, delete files, drop tables, recreate schema, or create users. The execution implementation remains intentionally disabled until separately approved.
+
 ## Test Requirements
 
 - Run destructive integration tests only in the isolated Docker environment.

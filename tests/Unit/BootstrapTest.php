@@ -7,6 +7,7 @@ use EsmondMcCain\NuclearReset\Confirmation;
 use EsmondMcCain\NuclearReset\FilesystemPreflight;
 use EsmondMcCain\NuclearReset\OperationLog;
 use EsmondMcCain\NuclearReset\Preflight;
+use EsmondMcCain\NuclearReset\ResetCoordinator;
 
 class BootstrapTest extends TestCase {
 	public function test_plugin_constants_are_defined(): void {
@@ -92,5 +93,43 @@ class BootstrapTest extends TestCase {
 		self::assertSame( 1, $record['schema_version'] );
 		self::assertSame( 'example-operation', $record['operation_id'] );
 		self::assertSame( 12, $record['details']['table_count'] );
+	}
+
+	public function test_reset_coordinator_blocks_unverified_or_concurrent_resets(): void {
+		$readiness = ResetCoordinator::get_readiness(
+			'RESET https://site.test',
+			'https://site.test',
+			true,
+			false,
+			true,
+			false,
+			true
+		);
+
+		self::assertFalse( $readiness['is_ready'] );
+		self::assertContains( 'The reset request could not be verified.', $readiness['blockers'] );
+		self::assertContains( 'Another reset operation is already in progress.', $readiness['blockers'] );
+	}
+
+	public function test_reset_coordinator_builds_a_non_executing_plan(): void {
+		$readiness = ResetCoordinator::get_readiness(
+			'RESET https://site.test',
+			'https://site.test',
+			true,
+			false,
+			true,
+			true,
+			false
+		);
+		$plan      = ResetCoordinator::build_operation_plan(
+			'example-operation',
+			'https://site.test',
+			array( 'wp_options', 'wp_posts' ),
+			array( 'plugins' => array() )
+		);
+
+		self::assertTrue( $readiness['is_ready'] );
+		self::assertSame( 'example-operation', $plan['operation_id'] );
+		self::assertFalse( $plan['execution_enabled'] );
 	}
 }
