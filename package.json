@@ -1,0 +1,23 @@
+{
+  "name": "em-nuclear-reset",
+  "version": "0.1.0",
+  "description": "Developer utility for resetting a single WordPress installation.",
+  "license": "GPL-2.0-or-later",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@wordpress/env": "^10.0.0"
+  },
+  "scripts": {
+    "check": "npm run lint:encoding && npm run lint:php && npm run test:php",
+    "env:clean": "wp-env clean all",
+    "env:destroy": "wp-env destroy",
+    "env:start": "wp-env start",
+    "env:stop": "wp-env stop",
+    "lint:encoding": "node tools/check-text-encoding.mjs",
+    "lint:php": "composer run lint",
+    "test:php": "composer run test"
+  }
+}

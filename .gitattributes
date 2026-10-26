@@ -1,0 +1,7 @@
+* text=auto
+
+/tests export-ignore
+/.github export-ignore
+/.wp-env.json export-ignore
+/phpcs.xml.dist export-ignore
+/phpunit.xml.dist export-ignore
