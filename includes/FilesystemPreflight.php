@@ -3,6 +3,8 @@
 namespace EsmondMcCain\NuclearReset;
 
 final class FilesystemPreflight {
+	private const MAX_ESTIMATED_FILES = 10000;
+
 	/**
 	 * Collects the file paths relevant to a future reset preview.
 	 *
@@ -42,11 +44,31 @@ final class FilesystemPreflight {
 	}
 
 	/**
+	 * Formats a byte count for the read-only preflight screen.
+	 *
+	 * @param int $bytes Byte count.
+	 * @return string
+	 */
+	public static function format_bytes( $bytes ): string {
+		$units      = array( 'B', 'KB', 'MB', 'GB', 'TB' );
+		$unit_count = count( $units );
+		$size       = max( 0, $bytes );
+		$unit_index = 0;
+
+		while ( $size >= 1024 && $unit_index < $unit_count - 1 ) {
+			$size /= 1024;
+			++$unit_index;
+		}
+
+		return number_format_i18n( $size, 0 === $unit_index ? 0 : 1 ) . ' ' . $units[ $unit_index ];
+	}
+
+	/**
 	 * Inspects the immediate entries within an approved root without recursing.
 	 *
 	 * @param string   $root            Approved root directory.
 	 * @param string[] $preserved_paths Paths that must not be reset.
-	 * @return array<int, array<string, string>>
+	 * @return array<int, array<string, mixed>>
 	 */
 	private static function inspect_directory_entries( $root, array $preserved_paths ): array {
 		if ( ! is_dir( $root ) ) {
@@ -77,7 +99,7 @@ final class FilesystemPreflight {
 	 * @param string $path         Candidate path.
 	 * @param string $allowed_root Approved containing root.
 	 * @param string $status       Initial classification.
-	 * @return array<string, string>
+	 * @return array<string, mixed>
 	 */
 	private static function inspect_path( $path, $allowed_root, $status ): array {
 		$resolved_path = realpath( $path );
@@ -95,10 +117,79 @@ final class FilesystemPreflight {
 			$reason = 'The resolved path is outside its approved root.';
 		}
 
+		$summary = 'blocked' === $status ? self::get_empty_summary() : self::get_path_summary( $resolved_path );
+
 		return array(
-			'path'   => self::normalize_path( $path ),
-			'status' => $status,
-			'reason' => $reason,
+			'path'       => self::normalize_path( $path ),
+			'status'     => $status,
+			'reason'     => $reason,
+			'file_count' => $summary['file_count'],
+			'size_bytes' => $summary['size_bytes'],
+			'truncated'  => $summary['truncated'],
+		);
+	}
+
+	/**
+	 * Returns an empty summary for a path that must not be scanned.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function get_empty_summary(): array {
+		return array(
+			'file_count' => 0,
+			'size_bytes' => 0,
+			'truncated'  => false,
+		);
+	}
+
+	/**
+	 * Counts regular files and their bytes without following symlinks.
+	 *
+	 * @param string $path Resolved, approved path.
+	 * @return array<string, mixed>
+	 */
+	private static function get_path_summary( $path ): array {
+		if ( is_file( $path ) ) {
+			return array(
+				'file_count' => 1,
+				'size_bytes' => (int) filesize( $path ),
+				'truncated'  => false,
+			);
+		}
+
+		if ( ! is_dir( $path ) ) {
+			return self::get_empty_summary();
+		}
+
+		$file_count = 0;
+		$size_bytes = 0;
+		$truncated  = false;
+
+		try {
+			$directory = new \RecursiveDirectoryIterator( $path, \FilesystemIterator::SKIP_DOTS );
+			$iterator  = new \RecursiveIteratorIterator( $directory, \RecursiveIteratorIterator::LEAVES_ONLY );
+
+			foreach ( $iterator as $item ) {
+				if ( $item->isLink() || ! $item->isFile() ) {
+					continue;
+				}
+
+				++$file_count;
+				$size_bytes += $item->getSize();
+
+				if ( self::MAX_ESTIMATED_FILES === $file_count ) {
+					$truncated = true;
+					break;
+				}
+			}
+		} catch ( \UnexpectedValueException $error ) {
+			return self::get_empty_summary();
+		}
+
+		return array(
+			'file_count' => $file_count,
+			'size_bytes' => $size_bytes,
+			'truncated'  => $truncated,
 		);
 	}
 

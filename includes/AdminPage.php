@@ -31,8 +31,9 @@ final class AdminPage {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'em-nuclear-reset' ) );
 		}
 
-		$preflight  = Preflight::collect();
-		$filesystem = FilesystemPreflight::collect();
+		$preflight           = Preflight::collect();
+		$filesystem          = FilesystemPreflight::collect();
+		$confirmation_phrase = Confirmation::get_required_phrase( $preflight['site_url'] );
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'EM Nuclear Reset', 'em-nuclear-reset' ); ?></h1>
@@ -69,10 +70,15 @@ final class AdminPage {
 			<?php endif; ?>
 
 			<h2><?php esc_html_e( 'Filesystem Preview', 'em-nuclear-reset' ); ?></h2>
-			<p><?php esc_html_e( 'Entries are listed without recursion. Preserved entries are retained, eligible entries are potential future cleanup targets, and blocked entries require manual review.', 'em-nuclear-reset' ); ?></p>
+			<p><?php esc_html_e( 'Preserved entries are retained, eligible entries are potential future cleanup targets, and blocked entries require manual review. Counts and sizes skip symlinks and stop after the safe scan limit.', 'em-nuclear-reset' ); ?></p>
 			<?php self::render_path_group( __( 'Uploads', 'em-nuclear-reset' ), $filesystem['uploads'] ); ?>
 			<?php self::render_path_group( __( 'Plugins', 'em-nuclear-reset' ), $filesystem['plugins'] ); ?>
 			<?php self::render_path_group( __( 'Themes', 'em-nuclear-reset' ), $filesystem['themes'] ); ?>
+
+			<h2><?php esc_html_e( 'Future Reset Confirmation', 'em-nuclear-reset' ); ?></h2>
+			<p><?php esc_html_e( 'Reset execution is not implemented. A future reset requires the typed phrase below, a separate irreversible-action acknowledgement, a valid nonce, and an administrator capability check.', 'em-nuclear-reset' ); ?></p>
+			<p><code><?php echo esc_html( $confirmation_phrase ); ?></code></p>
+			<p><?php esc_html_e( 'Future operation logs will be written outside cleanup scope in wp-content/em-nuclear-reset-logs.', 'em-nuclear-reset' ); ?></p>
 		</div>
 		<?php
 	}
@@ -116,8 +122,8 @@ final class AdminPage {
 	/**
 	 * Renders one filesystem classification group.
 	 *
-	 * @param string                       $heading Group heading.
-	 * @param array<int, array<string, string>> $paths   Classified paths.
+	 * @param string                           $heading Group heading.
+	 * @param array<int, array<string, mixed>> $paths   Classified paths.
 	 * @return void
 	 */
 	private static function render_path_group( $heading, array $paths ) {
@@ -128,6 +134,7 @@ final class AdminPage {
 				<tr>
 					<th><?php esc_html_e( 'Path', 'em-nuclear-reset' ); ?></th>
 					<th><?php esc_html_e( 'Classification', 'em-nuclear-reset' ); ?></th>
+					<th><?php esc_html_e( 'Estimate', 'em-nuclear-reset' ); ?></th>
 					<th><?php esc_html_e( 'Review note', 'em-nuclear-reset' ); ?></th>
 				</tr>
 			</thead>
@@ -136,6 +143,21 @@ final class AdminPage {
 					<tr>
 						<td><code><?php echo esc_html( $path['path'] ); ?></code></td>
 						<td><?php echo esc_html( $path['status'] ); ?></td>
+						<td>
+							<?php
+							echo esc_html(
+								sprintf(
+									/* translators: 1: file count, 2: formatted byte size. */
+									_n( '%1$s file, %2$s', '%1$s files, %2$s', $path['file_count'], 'em-nuclear-reset' ),
+									number_format_i18n( $path['file_count'] ),
+									FilesystemPreflight::format_bytes( $path['size_bytes'] )
+								)
+							);
+							if ( $path['truncated'] ) {
+								echo ' ' . esc_html__( '(scan limit reached)', 'em-nuclear-reset' );
+							}
+							?>
+						</td>
 						<td><?php echo esc_html( $path['reason'] ); ?></td>
 					</tr>
 				<?php endforeach; ?>

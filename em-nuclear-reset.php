@@ -21,6 +21,8 @@ define( 'EM_NUCLEAR_RESET_URL', plugin_dir_url( __FILE__ ) );
 
 require_once EM_NUCLEAR_RESET_DIR . 'includes/Preflight.php';
 require_once EM_NUCLEAR_RESET_DIR . 'includes/FilesystemPreflight.php';
+require_once EM_NUCLEAR_RESET_DIR . 'includes/Confirmation.php';
+require_once EM_NUCLEAR_RESET_DIR . 'includes/OperationLog.php';
 require_once EM_NUCLEAR_RESET_DIR . 'includes/AdminPage.php';
 
 add_action( 'admin_menu', array( '\\EsmondMcCain\\NuclearReset\\AdminPage', 'register' ) );

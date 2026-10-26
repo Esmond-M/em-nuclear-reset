@@ -3,7 +3,9 @@
 namespace EsmondMcCain\NuclearReset\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use EsmondMcCain\NuclearReset\Confirmation;
 use EsmondMcCain\NuclearReset\FilesystemPreflight;
+use EsmondMcCain\NuclearReset\OperationLog;
 use EsmondMcCain\NuclearReset\Preflight;
 
 class BootstrapTest extends TestCase {
@@ -62,5 +64,33 @@ class BootstrapTest extends TestCase {
 				'C:\\site\\wp-content\\plugins'
 			)
 		);
+	}
+
+	public function test_filesystem_preflight_formats_estimated_sizes(): void {
+		self::assertSame( '512 B', FilesystemPreflight::format_bytes( 512 ) );
+		self::assertSame( '1.5 KB', FilesystemPreflight::format_bytes( 1536 ) );
+	}
+
+	public function test_confirmation_requires_the_current_site_url_and_acknowledgement(): void {
+		$phrase = Confirmation::get_required_phrase( 'https://site.test/example/' );
+
+		self::assertSame( 'RESET https://site.test/example', $phrase );
+		self::assertTrue( Confirmation::is_valid( $phrase, 'https://site.test/example/', true ) );
+		self::assertFalse( Confirmation::is_valid( $phrase, 'https://other.test', true ) );
+		self::assertFalse( Confirmation::is_valid( $phrase, 'https://site.test/example/', false ) );
+	}
+
+	public function test_operation_log_record_is_structured_and_non_secret(): void {
+		$record = OperationLog::build_record(
+			'example-operation',
+			'https://site.test',
+			'preflight',
+			array( 'table_count' => 12 ),
+			'2026-10-26T00:00:00+00:00'
+		);
+
+		self::assertSame( 1, $record['schema_version'] );
+		self::assertSame( 'example-operation', $record['operation_id'] );
+		self::assertSame( 12, $record['details']['table_count'] );
 	}
 }

@@ -14,6 +14,10 @@ The operator is responsible for backups and recovery readiness. The plugin will 
 
 Multisite is refused. Filesystem cleanup must resolve and inspect every candidate path, reject symlinks, and refuse paths outside the approved WordPress content directories.
 
+## Confirmation and Logging
+
+Future reset execution requires a typed `RESET <site-url>` phrase, a separate irreversible-action acknowledgement, a valid nonce, `manage_options`, and a single-operation lock. Operation records will be JSON files under `wp-content/em-nuclear-reset-logs`, which is preserved from cleanup. This milestone defines the record schema and recovery plan only; it does not write logs or execute resets.
+
 ## Development Environments
 
 The primary validation targets are Local and WP Engine development/staging environments. `wp-env` is included for isolated Docker-based development; it is optional and does not replace host-specific validation.

@@ -25,8 +25,9 @@ Milestone 1: read-only preflight foundation.
 - No reset, filesystem cleanup, or destructive behavior exists.
 - The preflight service only lists tables matching the current `$wpdb->prefix` and reports missing core tables.
 - The admin-only preflight page displays collected facts and refuses multisite. It has no destructive controls.
-- Filesystem discovery classifies immediate uploads, plugin, and theme paths as preserved, eligible, or blocked without recursion or mutation.
+- Filesystem discovery classifies uploads, plugin, and theme paths as preserved, eligible, or blocked. It estimates regular-file count and size without following symlinks, with a scan limit.
+- Confirmation requirements and the future operation-log schema are implemented without an execution path; the recovery sequence and destructive-test requirements are documented.
 
 ## Next Task
 
-Add confirmation-state design and durable operation logging before any reset execution path is considered.
+Resolve the isolated Docker environment before destructive integration testing. Do not implement reset execution without explicit approval.
