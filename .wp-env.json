@@ -4,8 +4,8 @@
   "plugins": [
     "."
   ],
-  "port": 8888,
-  "testsPort": 8889,
+  "port": 18080,
+  "testsPort": 18081,
   "config": {
     "WP_DEBUG": true,
     "SCRIPT_DEBUG": true

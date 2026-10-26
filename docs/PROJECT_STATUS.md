@@ -2,7 +2,13 @@
 
 ## Current Milestone
 
-Milestone 0: repository and safety-model discovery.
+Milestone 1: read-only preflight foundation.
+
+## Runtime Context
+
+- The development site runs in Local by WP Engine.
+- The Windows PHP executable is development tooling only and must not be treated as the Local runtime.
+- The isolated `wp-env` environment is configured at `http://localhost:18080`.
 
 ## Decisions
 
@@ -16,9 +22,10 @@ Milestone 0: repository and safety-model discovery.
 
 ## Not Implemented
 
-- No reset, database, filesystem, admin UI, or destructive behavior exists.
-- No dependencies have been installed.
+- No reset, filesystem cleanup, or destructive behavior exists.
+- The preflight service only lists tables matching the current `$wpdb->prefix` and reports missing core tables.
+- The admin-only preflight page displays collected facts and refuses multisite. It has no destructive controls.
 
 ## Next Task
 
-Create the repository quality baseline, development environment configuration, and project decision records before implementing a read-only preflight.
+Add read-only filesystem discovery so the preview can distinguish preserved plugin/theme paths from eligible cleanup paths.
