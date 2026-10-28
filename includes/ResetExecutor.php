@@ -29,8 +29,6 @@ final class ResetExecutor {
 
 		try {
 			self::append_log( $operation_id, $preflight['site_url'], 'started', array( 'table_count' => count( $preflight['database_tables'] ) ) );
-			self::delete_eligible_paths( $filesystem );
-			self::append_log( $operation_id, $preflight['site_url'], 'filesystem_complete', array() );
 			self::drop_prefixed_tables( $preflight['database_tables'], $preflight['database_prefix'] );
 			self::append_log( $operation_id, $preflight['site_url'], 'database_dropped', array() );
 
@@ -64,6 +62,10 @@ final class ResetExecutor {
 			if ( is_wp_error( $activation ) ) {
 				throw new \RuntimeException( $activation->get_error_message() );
 			}
+
+			// Loaded third-party plugin hooks can still run during the rebuild request.
+			self::delete_eligible_paths( $filesystem );
+			self::append_log( $operation_id, $preflight['site_url'], 'filesystem_complete', array() );
 
 			$verification = self::verify( $preflight['active_theme'], $preflight['plugin_basename'], $installation['user_id'] );
 

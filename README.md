@@ -34,7 +34,7 @@ For WP-CLI, set the replacement administrator password in the environment or a s
 
 ## Recovery And Logging
 
-The executor acquires an exclusive lock, records the approved table count, removes eligible files, drops approved prefix-scoped tables, rebuilds WordPress with `wp_install()`, restores the theme and plugin, and verifies core tables, auto-increment columns, administrator access, and migration-plugin readiness.
+The executor acquires an exclusive lock, records the approved table count, drops approved prefix-scoped tables, rebuilds WordPress with `wp_install()`, restores the theme and plugin, removes eligible files, and verifies core tables, auto-increment columns, administrator access, and migration-plugin readiness.
 
 Operation records are JSONL files under `wp-content/em-nuclear-reset-logs`. The plugin creates Apache `.htaccess` and `index.php` protections; configure equivalent web-server rules for Nginx or another server before resetting a remote site.
 
