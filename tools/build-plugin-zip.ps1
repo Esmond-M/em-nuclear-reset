@@ -15,6 +15,9 @@ $runtimeEntries = @(
 	'README.md'
 )
 
+Add-Type -AssemblyName System.IO.Compression
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
 try {
 	New-Item -ItemType Directory -Path $stagedPluginDirectory -Force | Out-Null
 
@@ -30,7 +33,42 @@ try {
 
 	New-Item -ItemType Directory -Path $distributionDirectory -Force | Out-Null
 	Remove-Item -LiteralPath $archivePath -Force -ErrorAction SilentlyContinue
-	Compress-Archive -LiteralPath $stagedPluginDirectory -DestinationPath $archivePath -CompressionLevel Optimal -Force
+	$archive = [System.IO.Compression.ZipFile]::Open(
+		$archivePath,
+		[System.IO.Compression.ZipArchiveMode]::Create
+	)
+
+	try {
+		Get-ChildItem -LiteralPath $stagedPluginDirectory -File -Recurse | ForEach-Object {
+			$relativePath = $_.FullName.Substring( $stagedPluginDirectory.Length ).TrimStart( '\', '/' )
+			$entryName    = ( $pluginSlug + '/' + $relativePath ).Replace( '\', '/' )
+
+			[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+				$archive,
+				$_.FullName,
+				$entryName,
+				[System.IO.Compression.CompressionLevel]::Optimal
+			) | Out-Null
+		}
+	} finally {
+		$archive.Dispose()
+	}
+
+	$verificationArchive = [System.IO.Compression.ZipFile]::OpenRead( $archivePath )
+
+	try {
+		$entryNames = @( $verificationArchive.Entries | ForEach-Object { $_.FullName } )
+
+		if ( $entryNames | Where-Object { $_.Contains( '\' ) } ) {
+			throw 'ZIP entries must use forward-slash path separators.'
+		}
+
+		if ( $entryNames -notcontains "$pluginSlug/em-nuclear-reset.php" ) {
+			throw 'ZIP archive does not contain the plugin bootstrap file.'
+		}
+	} finally {
+		$verificationArchive.Dispose()
+	}
 
 	Write-Output "Created $archivePath"
 } finally {
