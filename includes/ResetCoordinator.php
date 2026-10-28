@@ -48,6 +48,31 @@ final class ResetCoordinator {
 	}
 
 	/**
+	 * Validates reset conditions available to the WP-CLI execution surface.
+	 *
+	 * Shell access is the authorization boundary for this command, so browser
+	 * capability and nonce checks do not apply here.
+	 *
+	 * @param string $typed_phrase Entered confirmation phrase.
+	 * @param string $site_url     Current site URL.
+	 * @param bool   $acknowledged Whether irreversible action was acknowledged.
+	 * @param bool   $is_multisite Whether the installation is multisite.
+	 * @param bool   $lock_is_held Whether another reset holds the operation lock.
+	 * @return array<string, mixed>
+	 */
+	public static function get_cli_readiness( $typed_phrase, $site_url, $acknowledged, $is_multisite, $lock_is_held ): array {
+		return self::get_readiness(
+			$typed_phrase,
+			$site_url,
+			$acknowledged,
+			$is_multisite,
+			true,
+			true,
+			$lock_is_held
+		);
+	}
+
+	/**
 	 * Builds the immutable scope to record before a future reset execution.
 	 *
 	 * @param string                         $operation_id     Unique operation identifier.

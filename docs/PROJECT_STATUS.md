@@ -2,7 +2,7 @@
 
 ## Current Milestone
 
-Milestone 1: read-only preflight foundation.
+Milestone 2: reset executor implemented and verified in isolated Docker.
 
 ## Runtime Context
 
@@ -20,15 +20,14 @@ Milestone 1: read-only preflight foundation.
 - Backup creation and verification are the operator's responsibility.
 - Filesystem cleanup must not follow symlinks or affect paths outside an explicit allowlist.
 
-## Not Implemented
+## Completed
 
-- No reset, filesystem cleanup, or destructive behavior exists.
-- The preflight service only lists tables matching the current `$wpdb->prefix` and reports missing core tables.
-- The admin-only preflight page displays collected facts and refuses multisite. It has no destructive controls.
-- Filesystem discovery classifies uploads, plugin, and theme paths as preserved, eligible, or blocked. It estimates regular-file count and size without following symlinks, with a scan limit.
-- Confirmation requirements and the future operation-log schema are implemented without an execution path; the recovery sequence and destructive-test requirements are documented.
-- The reset coordinator validates readiness and builds a non-executing operation plan; it cannot change the site.
+- Read-only database and filesystem preflight, including prefix-scoped table discovery and symlink protection.
+- Admin preflight page, confirmation contract, operation log, and single-operation lock.
+- WP-CLI-only reset executor with guarded confirmation, approved filesystem cleanup, prefix-scoped table dropping, `wp_install()` recovery, preserved theme/plugin restoration, and post-reset verification.
+- Isolated `wp-env` destructive integration run: the prefixed fixture table, fixture post, and upload file were removed; the unrelated-prefix table and marker were retained; the rebuilt administrator has `manage_options`; `em-nuclear-reset` and `twentytwentyfive` were restored; all 10 required auto-increment columns were present; all completion log phases were written; and the lock was released.
 
-## Next Task
+## Remaining Test Coverage
 
-Create the execution implementation only after explicit destructive-test approval. The first test must run solely in `wp-env`.
+- Verify that a symlink candidate blocks execution without deleting any approved path.
+- Simulate interruption after each execution phase and confirm the operation log records the incomplete phase.

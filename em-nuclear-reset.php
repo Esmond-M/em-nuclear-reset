@@ -23,7 +23,14 @@ require_once EM_NUCLEAR_RESET_DIR . 'includes/Preflight.php';
 require_once EM_NUCLEAR_RESET_DIR . 'includes/FilesystemPreflight.php';
 require_once EM_NUCLEAR_RESET_DIR . 'includes/Confirmation.php';
 require_once EM_NUCLEAR_RESET_DIR . 'includes/OperationLog.php';
+require_once EM_NUCLEAR_RESET_DIR . 'includes/OperationLock.php';
 require_once EM_NUCLEAR_RESET_DIR . 'includes/ResetCoordinator.php';
+require_once EM_NUCLEAR_RESET_DIR . 'includes/ResetExecutor.php';
 require_once EM_NUCLEAR_RESET_DIR . 'includes/AdminPage.php';
+
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	require_once EM_NUCLEAR_RESET_DIR . 'includes/CliCommand.php';
+	WP_CLI::add_command( 'em-nuclear-reset', '\\EsmondMcCain\\NuclearReset\\CliCommand' );
+}
 
 add_action( 'admin_menu', array( '\\EsmondMcCain\\NuclearReset\\AdminPage', 'register' ) );

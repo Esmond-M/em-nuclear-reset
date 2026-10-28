@@ -35,4 +35,22 @@ final class OperationLog {
 	public static function get_directory(): string {
 		return WP_CONTENT_DIR . '/em-nuclear-reset-logs';
 	}
+
+	/**
+	 * Appends a structured operation record to the preserved JSONL log.
+	 *
+	 * @param array<string, mixed> $record Operation record.
+	 * @return bool
+	 */
+	public static function append( array $record ): bool {
+		if ( empty( $record['operation_id'] ) || ! wp_mkdir_p( self::get_directory() ) ) {
+			return false;
+		}
+
+		$encoded_record = wp_json_encode( $record ) . PHP_EOL;
+		$log_path       = self::get_directory() . '/' . sanitize_key( $record['operation_id'] ) . '.jsonl';
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- The preserved log requires an append-only write with an exclusive lock.
+		return false !== file_put_contents( $log_path, $encoded_record, FILE_APPEND | LOCK_EX );
+	}
 }
