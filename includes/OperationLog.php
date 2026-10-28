@@ -3,6 +3,9 @@
 namespace EsmondMcCain\NuclearReset;
 
 final class OperationLog {
+	private const ACCESS_RULES = "Require all denied\nDeny from all\n";
+	private const INDEX_FILE   = "<?php\n// Silence is golden.\n";
+
 	/**
 	 * Builds the durable record schema for a future reset operation.
 	 *
@@ -37,13 +40,46 @@ final class OperationLog {
 	}
 
 	/**
+	 * Creates the preserved log directory with basic web-server protections.
+	 *
+	 * @return bool
+	 */
+	public static function ensure_directory(): bool {
+		$directory = self::get_directory();
+
+		if ( ! wp_mkdir_p( $directory ) ) {
+			return false;
+		}
+
+		$protection_files = array(
+			'.htaccess' => self::ACCESS_RULES,
+			'index.php' => self::INDEX_FILE,
+		);
+
+		foreach ( $protection_files as $filename => $contents ) {
+			$path = $directory . '/' . $filename;
+
+			if ( file_exists( $path ) ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Creates defense-in-depth access controls in the preserved log directory.
+			if ( false === file_put_contents( $path, $contents, LOCK_EX ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Appends a structured operation record to the preserved JSONL log.
 	 *
 	 * @param array<string, mixed> $record Operation record.
 	 * @return bool
 	 */
 	public static function append( array $record ): bool {
-		if ( empty( $record['operation_id'] ) || ! wp_mkdir_p( self::get_directory() ) ) {
+		if ( empty( $record['operation_id'] ) || ! self::ensure_directory() ) {
 			return false;
 		}
 

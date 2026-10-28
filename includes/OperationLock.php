@@ -12,7 +12,7 @@ final class OperationLock {
 	 * @return bool
 	 */
 	public static function acquire( $operation_id ): bool {
-		if ( ! wp_mkdir_p( OperationLog::get_directory() ) ) {
+		if ( ! OperationLog::ensure_directory() ) {
 			return false;
 		}
 

@@ -16,7 +16,7 @@ Multisite is refused. Filesystem cleanup must resolve and inspect every candidat
 
 ## Confirmation and Logging
 
-The admin screen is read-only. Reset execution requires WP-CLI, a typed `RESET <site-url>` phrase, a separate irreversible-action acknowledgement, a password supplied through an environment variable, and a single-operation lock. Shell access is the authorization boundary for WP-CLI execution; browser nonces and `manage_options` checks do not apply to the command. Operation records are JSONL files under `wp-content/em-nuclear-reset-logs`, which is preserved from cleanup and must be protected from direct web access by the host configuration.
+The admin screen is read-only. Reset execution requires WP-CLI, a typed `RESET <site-url>` phrase, a separate irreversible-action acknowledgement, a password supplied through an environment variable, and a single-operation lock. Shell access is the authorization boundary for WP-CLI execution; browser nonces and `manage_options` checks do not apply to the command. Operation records are JSONL files under `wp-content/em-nuclear-reset-logs`; the plugin creates Apache `.htaccess` and `index.php` defenses, and the host configuration must deny direct access on every web server.
 
 ## Remote Execution
 

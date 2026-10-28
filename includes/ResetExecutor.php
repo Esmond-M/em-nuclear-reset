@@ -28,13 +28,10 @@ final class ResetExecutor {
 
 		try {
 			self::append_log( $operation_id, $preflight['site_url'], 'started', array( 'table_count' => count( $preflight['database_tables'] ) ) );
-			do_action( 'em_nuclear_reset_phase_complete', 'started', $operation_id );
 			self::delete_eligible_paths( $filesystem );
 			self::append_log( $operation_id, $preflight['site_url'], 'filesystem_complete', array() );
-			do_action( 'em_nuclear_reset_phase_complete', 'filesystem_complete', $operation_id );
 			self::drop_prefixed_tables( $preflight['database_tables'], $preflight['database_prefix'] );
 			self::append_log( $operation_id, $preflight['site_url'], 'database_dropped', array() );
-			do_action( 'em_nuclear_reset_phase_complete', 'database_dropped', $operation_id );
 
 			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -76,13 +73,23 @@ final class ResetExecutor {
 	 * @return void
 	 */
 	private static function delete_eligible_paths( array $filesystem ) {
-		foreach ( $filesystem as $group ) {
+		$allowed_roots = array(
+			'uploads' => WP_CONTENT_DIR,
+			'plugins' => WP_PLUGIN_DIR,
+			'themes'  => get_theme_root(),
+		);
+
+		foreach ( $filesystem as $group_name => $group ) {
+			if ( empty( $allowed_roots[ $group_name ] ) ) {
+				throw new \RuntimeException( 'Refusing an unknown filesystem cleanup group.' );
+			}
+
 			foreach ( $group as $path ) {
 				if ( 'eligible' !== $path['status'] ) {
 					continue;
 				}
 
-				self::delete_path( $path['path'] );
+				self::delete_path( $path['path'], $allowed_roots[ $group_name ] );
 			}
 		}
 	}
@@ -90,18 +97,43 @@ final class ResetExecutor {
 	/**
 	 * Rejects symlinks, then recursively deletes a regular file or directory.
 	 *
-	 * @param string $path Approved eligible path.
+	 * @param string $path         Approved eligible path.
+	 * @param string $allowed_root Approved containing root.
 	 * @return void
 	 */
-	private static function delete_path( $path ) {
-		self::assert_no_symlinks( $path );
+	private static function delete_path( $path, $allowed_root ) {
+		$approved_path = self::get_approved_path( $path, $allowed_root );
 
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		global $wp_filesystem;
 
-		if ( ! WP_Filesystem() || ! $wp_filesystem->delete( $path, true, 'd' ) ) {
-			throw new \RuntimeException( 'Unable to remove eligible path: ' . esc_html( $path ) );
+		if ( ! WP_Filesystem() || ! $wp_filesystem->delete( $approved_path, true, 'd' ) ) {
+			throw new \RuntimeException( 'Unable to remove eligible path: ' . esc_html( $approved_path ) );
 		}
+	}
+
+	/**
+	 * Resolves and rechecks an approved filesystem target immediately before deletion.
+	 *
+	 * @param string $path         Approved eligible path.
+	 * @param string $allowed_root Approved containing root.
+	 * @return string
+	 */
+	private static function get_approved_path( $path, $allowed_root ) {
+		if ( is_link( $path ) ) {
+			throw new \RuntimeException( 'Refusing to delete symlinked path: ' . esc_html( $path ) );
+		}
+
+		$resolved_path = realpath( $path );
+		$resolved_root = realpath( $allowed_root );
+
+		if ( false === $resolved_path || false === $resolved_root || ! FilesystemPreflight::is_path_within( $resolved_path, $resolved_root ) ) {
+			throw new \RuntimeException( 'Refusing a filesystem path outside its approved root.' );
+		}
+
+		self::assert_no_symlinks( $resolved_path );
+
+		return $resolved_path;
 	}
 
 	/**

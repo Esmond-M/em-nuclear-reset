@@ -8,6 +8,7 @@
 - The password environment variable named by `--admin-password-env` is set by the host or secret manager; the password value is not passed as a command argument.
 - No other reset operation holds the execution lock.
 - The preflight preview has completed and contains no blocked database or filesystem scope.
+- The host denies direct web access to `wp-content/em-nuclear-reset-logs`; the plugin creates Apache `.htaccess` and `index.php` defenses, but Nginx and other servers require equivalent host configuration.
 
 ## Preserved Components
 
