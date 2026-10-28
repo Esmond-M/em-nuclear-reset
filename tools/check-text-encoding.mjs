@@ -9,6 +9,7 @@ const textExtensions = new Set( [
 	'.md',
 	'.mjs',
 	'.php',
+	'.ps1',
 	'.txt',
 	'.xml',
 	'.yaml',
