@@ -2,10 +2,11 @@
 
 ## Preconditions
 
-- The current user has `manage_options`.
+- The invoking shell account is explicitly authorized to run WP-CLI for this installation.
 - The installation is not multisite.
 - The typed confirmation is exactly `RESET <site-url>` and the irreversible-action acknowledgement is checked.
-- A valid nonce is present and no other reset operation holds the execution lock.
+- The password environment variable named by `--admin-password-env` is set by the host or secret manager; the password value is not passed as a command argument.
+- No other reset operation holds the execution lock.
 - The preflight preview has completed and contains no blocked database or filesystem scope.
 
 ## Preserved Components
@@ -31,7 +32,7 @@
 
 ## WP-CLI Dry Run
 
-`wp em-nuclear-reset plan` prints the current scoped plan without changing files or database tables. `wp em-nuclear-reset execute` requires `--execute=true`, the exact typed phrase, `--acknowledge=true`, administrator replacement details, and WP-CLI's `--yes` confirmation. The command is the only supported execution surface; a browser request will not reset a site.
+`wp em-nuclear-reset plan` prints the current scoped plan without changing files or database tables. `wp em-nuclear-reset execute` requires `--execute=true`, the exact typed phrase, `--acknowledge=true`, administrator replacement details, an `--admin-password-env` reference to an uppercase environment variable containing the password, and WP-CLI's `--yes` confirmation. The password itself must not be passed as a command argument. The command is the only supported execution surface; a browser request will not reset a site.
 
 ## Test Requirements
 

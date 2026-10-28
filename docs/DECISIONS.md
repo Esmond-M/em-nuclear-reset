@@ -16,7 +16,11 @@ Multisite is refused. Filesystem cleanup must resolve and inspect every candidat
 
 ## Confirmation and Logging
 
-Future reset execution requires a typed `RESET <site-url>` phrase, a separate irreversible-action acknowledgement, a valid nonce, `manage_options`, and a single-operation lock. Operation records will be JSON files under `wp-content/em-nuclear-reset-logs`, which is preserved from cleanup. This milestone defines the record schema and recovery plan only; it does not write logs or execute resets.
+The admin screen is read-only. Reset execution requires WP-CLI, a typed `RESET <site-url>` phrase, a separate irreversible-action acknowledgement, a password supplied through an environment variable, and a single-operation lock. Shell access is the authorization boundary for WP-CLI execution; browser nonces and `manage_options` checks do not apply to the command. Operation records are JSONL files under `wp-content/em-nuclear-reset-logs`, which is preserved from cleanup and must be protected from direct web access by the host configuration.
+
+## Remote Execution
+
+The operator must use an account with deliberately restricted shell access. Set the replacement administrator password through the remote environment or secret manager, then pass only its uppercase variable name with `--admin-password-env`; never place the password itself in a shell command, script, CI log, or WP-CLI argument. Verify that the web server denies direct access to `wp-content/em-nuclear-reset-logs` before running a reset.
 
 ## Development Environments
 

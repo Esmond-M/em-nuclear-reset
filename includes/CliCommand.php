@@ -52,22 +52,22 @@ final class CliCommand {
 	 * --admin-email=<email>
 	 * : Email for the rebuilt administrator.
 	 *
-	 * --admin-password=<password>
-	 * : Password for the rebuilt administrator.
+	 * --admin-password-env=<variable>
+	 * : Environment variable containing the password for the rebuilt administrator.
 	 *
 	 * [--yes]
 	 * : Confirms the irreversible reset after all other safeguards pass.
 	 *
 	 * ## EXAMPLES
 	 *
-	 *     wp em-nuclear-reset execute --execute=true --confirm='RESET https://site.test' --acknowledge=true --site-title='Clean Site' --admin-user=admin --admin-email=admin@example.test --admin-password='change-me' --yes
+	 *     wp em-nuclear-reset execute --execute=true --confirm='RESET https://site.test' --acknowledge=true --site-title='Clean Site' --admin-user=admin --admin-email=admin@example.test --admin-password-env=EM_NUCLEAR_RESET_ADMIN_PASSWORD --yes
 	 *
 	 * @param string[]               $args       Positional arguments.
 	 * @param array<string, mixed> $assoc_args Associative arguments.
 	 * @return void
 	 */
 	public function execute( $args, $assoc_args ) {
-		$required_arguments = array( 'execute', 'confirm', 'acknowledge', 'site-title', 'admin-user', 'admin-email', 'admin-password' );
+		$required_arguments = array( 'execute', 'confirm', 'acknowledge', 'site-title', 'admin-user', 'admin-email', 'admin-password-env' );
 
 		foreach ( $required_arguments as $argument ) {
 			if ( empty( $assoc_args[ $argument ] ) ) {
@@ -92,11 +92,12 @@ final class CliCommand {
 		}
 
 		WP_CLI::confirm( 'This permanently resets the current WordPress installation.', $assoc_args );
-		$result = ResetExecutor::execute(
+		$admin_password = self::get_admin_password( $assoc_args['admin-password-env'] );
+		$result         = ResetExecutor::execute(
 			sanitize_text_field( $assoc_args['site-title'] ),
 			sanitize_user( $assoc_args['admin-user'], true ),
 			sanitize_email( $assoc_args['admin-email'] ),
-			$assoc_args['admin-password']
+			$admin_password
 		);
 
 		if ( is_wp_error( $result ) ) {
@@ -104,5 +105,25 @@ final class CliCommand {
 		}
 
 		WP_CLI::success( sprintf( 'Reset completed. New administrator user ID: %d.', $result['admin_user_id'] ) );
+	}
+
+	/**
+	 * Retrieves the administrator password without exposing it in process arguments.
+	 *
+	 * @param string $environment_variable Environment variable name.
+	 * @return string
+	 */
+	private static function get_admin_password( $environment_variable ) {
+		if ( ! preg_match( '/^[A-Z_][A-Z0-9_]*$/', $environment_variable ) ) {
+			WP_CLI::error( 'The --admin-password-env argument must be an uppercase environment variable name.' );
+		}
+
+		$password = getenv( $environment_variable );
+
+		if ( false === $password || '' === $password ) {
+			WP_CLI::error( sprintf( 'The %s environment variable is not set.', $environment_variable ) );
+		}
+
+		return $password;
 	}
 }
