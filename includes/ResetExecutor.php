@@ -4,15 +4,16 @@ namespace EsmondMcCain\NuclearReset;
 
 final class ResetExecutor {
 	/**
-	 * Executes a confirmed single-site reset from the WP-CLI command only.
+	 * Executes a confirmed single-site reset.
 	 *
 	 * @param string $site_title    New site title.
 	 * @param string $admin_user    New administrator username.
 	 * @param string $admin_email   New administrator email.
 	 * @param string $admin_password New administrator password.
+	 * @param string $admin_password_hash Existing administrator password hash to restore.
 	 * @return array<string, mixed>|\WP_Error
 	 */
-	public static function execute( $site_title, $admin_user, $admin_email, $admin_password ) {
+	public static function execute( $site_title, $admin_user, $admin_email, $admin_password, $admin_password_hash = '' ) {
 		$preflight     = Preflight::collect();
 		$filesystem    = FilesystemPreflight::collect();
 		$operation_id  = wp_generate_uuid4();
@@ -37,6 +38,26 @@ final class ResetExecutor {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
 			$installation = wp_install( $site_title, $admin_user, $admin_email, true, '', $admin_password );
+
+			if ( '' !== $admin_password_hash ) {
+				global $wpdb;
+
+				$restored = $wpdb->update(
+					$wpdb->users,
+					array(
+						'user_pass'           => $admin_password_hash,
+						'user_activation_key' => '',
+					),
+					array( 'ID' => $installation['user_id'] ),
+					array( '%s', '%s' ),
+					array( '%d' )
+				);
+
+				if ( false === $restored ) {
+					throw new \RuntimeException( 'Unable to restore the administrator password.' );
+				}
+			}
+
 			switch_theme( $preflight['active_theme'] );
 			$activation = activate_plugin( $preflight['plugin_basename'], '', false, true );
 

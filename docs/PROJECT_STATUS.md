@@ -22,10 +22,11 @@ Milestone 2: reset executor implemented and verified in isolated Docker.
 
 ## Completed
 
-- Read-only database and filesystem preflight, including prefix-scoped table discovery and symlink protection.
-- Admin preflight page, confirmation contract, operation log, and single-operation lock.
-- WP-CLI-only reset executor with guarded confirmation, approved filesystem cleanup, prefix-scoped table dropping, `wp_install()` recovery, preserved theme/plugin restoration, and post-reset verification.
+- Database and filesystem preflight, including prefix-scoped table discovery and symlink protection.
+- Admin preflight and reset page, confirmation contract, operation log, and single-operation lock.
+- wp-admin and WP-CLI reset executors with guarded confirmation, approved filesystem cleanup, prefix-scoped table dropping, `wp_install()` recovery, preserved theme/plugin restoration, and post-reset verification. The browser flow restores the initiating administrator's password hash and session.
 - Isolated `wp-env` destructive integration run: the prefixed fixture table, fixture post, and upload file were removed; the unrelated-prefix table and marker were retained; the rebuilt administrator has `manage_options`; `em-nuclear-reset` and `twentytwentyfive` were restored; all 10 required auto-increment columns were present; all completion log phases were written; and the lock was released.
 - Docker failure-path coverage: a symlinked plugin entry blocked execution before either an eligible file or a prefixed fixture table changed; deliberate interruptions after `started`, `filesystem_complete`, and `database_dropped` each wrote a `failed` record and released the lock.
 - Browser verification: the recreated `emresetadmin` account successfully logged in to the Docker `/wp-admin/` dashboard.
+- wp-admin reset verification: the authenticated confirmation POST returned to the Tools page, restored the initiating administrator session, reached the Docker `/wp-admin/` dashboard, and retained the active reset plugin.
 - Remote hardening: administrator passwords are sourced from a named environment variable rather than a WP-CLI argument; filesystem targets are resolved and contained again immediately before deletion; and the log directory creates Apache access-denial and index files. Docker verified that direct log-file HTTP access returns `403`.

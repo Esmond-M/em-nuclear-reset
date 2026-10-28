@@ -4,7 +4,7 @@ EM Nuclear Reset is a developer-oriented utility for resetting one non-multisite
 
 ## Status
 
-The reset executor is implemented and validated in isolated Docker. It runs only through WP-CLI; the WordPress admin page is a read-only preflight view.
+The reset executor runs from both the WordPress Tools page and WP-CLI. The wp-admin flow requires an administrator session, a valid nonce, the exact typed confirmation phrase, and an irreversible-action acknowledgement; it restores the initiating administrator with its existing password. The WP-CLI flow creates the administrator supplied to the command.
 
 ## Package For Installation
 

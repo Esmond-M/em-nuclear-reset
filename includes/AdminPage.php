@@ -5,6 +5,7 @@ namespace EsmondMcCain\NuclearReset;
 final class AdminPage {
 	private const CAPABILITY = 'manage_options';
 	private const MENU_SLUG  = 'em-nuclear-reset';
+	private const ACTION     = 'em_nuclear_reset_execute';
 
 	/**
 	 * Registers the read-only preflight page.
@@ -22,7 +23,56 @@ final class AdminPage {
 	}
 
 	/**
-	 * Renders the preflight facts without making any changes.
+	 * Handles a confirmed reset from the Tools page.
+	 *
+	 * @return void
+	 */
+	public static function handle_execute() {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to reset this site.', 'em-nuclear-reset' ) );
+		}
+
+		$preflight      = Preflight::collect();
+		$current_user   = wp_get_current_user();
+		$typed_phrase   = isset( $_POST['em_nuclear_reset_confirmation'] ) ? sanitize_text_field( wp_unslash( $_POST['em_nuclear_reset_confirmation'] ) ) : '';
+		$acknowledged   = isset( $_POST['em_nuclear_reset_acknowledged'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['em_nuclear_reset_acknowledged'] ) );
+		$nonce_verified = isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), self::ACTION );
+		$readiness      = ResetCoordinator::get_readiness(
+			$typed_phrase,
+			$preflight['site_url'],
+			$acknowledged,
+			$preflight['is_multisite'],
+			true,
+			$nonce_verified,
+			OperationLock::is_held()
+		);
+
+		if ( ! $readiness['is_ready'] ) {
+			wp_die( esc_html( implode( ' ', $readiness['blockers'] ) ) );
+		}
+
+		$result = ResetExecutor::execute(
+			get_option( 'blogname' ),
+			$current_user->user_login,
+			$current_user->user_email,
+			wp_generate_password( 64, true, true ),
+			$current_user->user_pass
+		);
+
+		if ( is_wp_error( $result ) ) {
+			wp_die( esc_html( $result->get_error_message() ) );
+		}
+
+		wp_clear_auth_cookie();
+		wp_set_current_user( $result['admin_user_id'] );
+		wp_set_auth_cookie( $result['admin_user_id'] );
+
+		wp_safe_redirect( admin_url( 'tools.php?page=' . self::MENU_SLUG ) );
+		exit;
+	}
+
+	/**
+	 * Renders reset preflight facts and the confirmed execution form.
 	 *
 	 * @return void
 	 */
@@ -37,7 +87,7 @@ final class AdminPage {
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'EM Nuclear Reset', 'em-nuclear-reset' ); ?></h1>
-			<p><?php esc_html_e( 'Read-only preflight. No site data or files have been changed.', 'em-nuclear-reset' ); ?></p>
+			<p><?php esc_html_e( 'Review the reset scope before executing this irreversible operation.', 'em-nuclear-reset' ); ?></p>
 
 			<?php if ( $preflight['is_multisite'] ) : ?>
 				<div class="notice notice-error">
@@ -75,10 +125,29 @@ final class AdminPage {
 			<?php self::render_path_group( __( 'Plugins', 'em-nuclear-reset' ), $filesystem['plugins'] ); ?>
 			<?php self::render_path_group( __( 'Themes', 'em-nuclear-reset' ), $filesystem['themes'] ); ?>
 
-			<h2><?php esc_html_e( 'Future Reset Confirmation', 'em-nuclear-reset' ); ?></h2>
-			<p><?php esc_html_e( 'Reset execution is not implemented. A future reset requires the typed phrase below, a separate irreversible-action acknowledgement, a valid nonce, and an administrator capability check.', 'em-nuclear-reset' ); ?></p>
-			<p><code><?php echo esc_html( $confirmation_phrase ); ?></code></p>
-			<p><?php esc_html_e( 'Future operation logs will be written outside cleanup scope in wp-content/em-nuclear-reset-logs.', 'em-nuclear-reset' ); ?></p>
+			<?php if ( ! $preflight['is_multisite'] ) : ?>
+				<h2><?php esc_html_e( 'Reset Site', 'em-nuclear-reset' ); ?></h2>
+				<p><?php esc_html_e( 'This permanently deletes the scoped site data and eligible files, then rebuilds WordPress. The current administrator account is restored with its existing password.', 'em-nuclear-reset' ); ?></p>
+				<p><?php esc_html_e( 'Operation logs are written outside cleanup scope in wp-content/em-nuclear-reset-logs.', 'em-nuclear-reset' ); ?></p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION ); ?>">
+					<?php wp_nonce_field( self::ACTION ); ?>
+					<p>
+						<label for="em-nuclear-reset-confirmation">
+							<?php esc_html_e( 'Type the following phrase to continue:', 'em-nuclear-reset' ); ?>
+							<code><?php echo esc_html( $confirmation_phrase ); ?></code>
+						</label><br>
+						<input id="em-nuclear-reset-confirmation" name="em_nuclear_reset_confirmation" type="text" class="regular-text" autocomplete="off" required>
+					</p>
+					<p>
+						<label>
+							<input name="em_nuclear_reset_acknowledged" type="checkbox" value="1" required>
+							<?php esc_html_e( 'I understand this operation is permanent and cannot be undone.', 'em-nuclear-reset' ); ?>
+						</label>
+					</p>
+					<?php submit_button( __( 'Reset WordPress', 'em-nuclear-reset' ), 'delete', 'submit', false ); ?>
+				</form>
+			<?php endif; ?>
 		</div>
 		<?php
 	}

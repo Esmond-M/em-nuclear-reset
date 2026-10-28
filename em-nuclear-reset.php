@@ -34,3 +34,4 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 }
 
 add_action( 'admin_menu', array( '\\EsmondMcCain\\NuclearReset\\AdminPage', 'register' ) );
+add_action( 'admin_post_em_nuclear_reset_execute', array( '\\EsmondMcCain\\NuclearReset\\AdminPage', 'handle_execute' ) );
