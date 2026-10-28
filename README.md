@@ -59,6 +59,12 @@ Run checks:
 npm run check
 ```
 
+Run the Docker reset regression suite:
+
+```powershell
+npm run test:integration
+```
+
 Use the isolated WordPress environment:
 
 ```powershell
@@ -71,7 +77,7 @@ The isolated site runs at `http://localhost:18080`; test services use port `1808
 
 ## Validation
 
-The reset flow is validated in isolated Docker with WordPress 6.7. Coverage includes normal reset behavior, filesystem symlink refusal, interruption logging and lock release, the restored administrator session reaching `/wp-admin/`, reset-plugin reactivation, required core schema attributes, and denied direct HTTP access to operation logs.
+The reset flow is validated in isolated Docker with WordPress 6.7. Coverage includes normal reset behavior, filesystem symlink refusal, interruption logging and lock release, loaded third-party plugin hooks during schema rebuild, the restored administrator session reaching `/wp-admin/`, reset-plugin reactivation, required core schema attributes, and denied direct HTTP access to operation logs.
 
 ## Package For Installation
 

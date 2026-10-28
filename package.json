@@ -19,6 +19,7 @@
     "lint:encoding": "node tools/check-text-encoding.mjs",
     "lint:php": "composer run lint",
     "package:plugin": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/build-plugin-zip.ps1",
+    "test:integration": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-integration.ps1",
     "test:php": "composer run test"
   }
 }
