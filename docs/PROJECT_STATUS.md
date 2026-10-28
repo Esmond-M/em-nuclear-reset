@@ -26,8 +26,5 @@ Milestone 2: reset executor implemented and verified in isolated Docker.
 - Admin preflight page, confirmation contract, operation log, and single-operation lock.
 - WP-CLI-only reset executor with guarded confirmation, approved filesystem cleanup, prefix-scoped table dropping, `wp_install()` recovery, preserved theme/plugin restoration, and post-reset verification.
 - Isolated `wp-env` destructive integration run: the prefixed fixture table, fixture post, and upload file were removed; the unrelated-prefix table and marker were retained; the rebuilt administrator has `manage_options`; `em-nuclear-reset` and `twentytwentyfive` were restored; all 10 required auto-increment columns were present; all completion log phases were written; and the lock was released.
-
-## Remaining Test Coverage
-
-- Verify that a symlink candidate blocks execution without deleting any approved path.
-- Simulate interruption after each execution phase and confirm the operation log records the incomplete phase.
+- Docker failure-path coverage: a symlinked plugin entry blocked execution before either an eligible file or a prefixed fixture table changed; deliberate interruptions after `started`, `filesystem_complete`, and `database_dropped` each wrote a `failed` record and released the lock.
+- Browser verification: the recreated `emresetadmin` account successfully logged in to the Docker `/wp-admin/` dashboard.

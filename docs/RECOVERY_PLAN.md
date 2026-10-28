@@ -38,9 +38,13 @@
 - Run destructive integration tests only in the isolated Docker environment.
 - Seed a custom prefixed table, normal plugin/theme entries, uploads, a symlink candidate, and an unrelated-prefix table.
 - Verify that only approved-prefix tables and eligible paths are changed.
-- Simulate interruption after each execution phase and confirm the operation log reports the incomplete phase.
+- Simulate interruption after each recoverable execution phase and confirm the operation log reports the incomplete phase.
 - Confirm the recreated administrator can access `/wp-admin` and required core schema attributes exist.
 
 ## Completed Docker Integration Run
 
 The isolated `wp-env` environment completed a destructive reset at `http://localhost:18080`. The test seeded a `wp_`-prefixed fixture table, an unrelated-prefix fixture table, a published post, and an upload file. The reset removed the prefixed table, post, and upload; retained the unrelated-prefix table and marker; recreated an administrator with `manage_options`; restored `em-nuclear-reset` and `twentytwentyfive`; restored all 10 required auto-increment columns; wrote `started`, `filesystem_complete`, `database_dropped`, and `complete` log phases; and released the operation lock.
+
+## Completed Docker Failure-Path Tests
+
+An immediate plugin-directory symlink blocked execution before either an eligible plugin file or a prefixed fixture table was changed. Docker-only must-use hooks then interrupted execution after `started`, `filesystem_complete`, and `database_dropped`. Each operation log recorded all completed phases followed by `failed`, and each lock was released. The rebuilt `emresetadmin` account also logged in successfully to the Docker `/wp-admin/` dashboard.

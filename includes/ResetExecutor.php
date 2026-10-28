@@ -28,10 +28,13 @@ final class ResetExecutor {
 
 		try {
 			self::append_log( $operation_id, $preflight['site_url'], 'started', array( 'table_count' => count( $preflight['database_tables'] ) ) );
+			do_action( 'em_nuclear_reset_phase_complete', 'started', $operation_id );
 			self::delete_eligible_paths( $filesystem );
 			self::append_log( $operation_id, $preflight['site_url'], 'filesystem_complete', array() );
+			do_action( 'em_nuclear_reset_phase_complete', 'filesystem_complete', $operation_id );
 			self::drop_prefixed_tables( $preflight['database_tables'], $preflight['database_prefix'] );
 			self::append_log( $operation_id, $preflight['site_url'], 'database_dropped', array() );
+			do_action( 'em_nuclear_reset_phase_complete', 'database_dropped', $operation_id );
 
 			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
